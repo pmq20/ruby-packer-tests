@@ -1,0 +1,43 @@
+name: Ubuntu16.04
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  make:
+    strategy:
+      matrix:
+        os: [ubuntu-16.04]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: "[Enclose.IO] Install dependencies"
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential squashfs-tools
+      - uses: actions/checkout@v2
+        with:
+          path: src
+      - name: "[Enclose.IO] Download binaries"
+        run: |
+          curl -OL https://github.com/pmq20/ruby-packer/releases/download/linux-x64/rubyc
+          chmod +x rubyc
+          curl -OL https://github.com/enclose-io/ruby/releases/download/v2.7.1-linux/ruby
+          chmod +x ruby
+      - name: "[Enclose.IO] Check dependencies"
+        run: |
+          cat /etc/issue
+          uname -a
+          uname -p
+          uname -m
+          lscpu
+          which mksquashfs
+          mksquashfs -version
+      - name: "[Enclose.IO] TEST"
+        run: |
+          export PATH="$(pwd):$PATH"
+          cd src
+          which rubyc
+          which ruby
+          ./test-all

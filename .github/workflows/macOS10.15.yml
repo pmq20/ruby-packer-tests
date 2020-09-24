@@ -1,0 +1,43 @@
+name: macOS10.15
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  make:
+    strategy:
+      matrix:
+        os: [macos-10.15]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: src
+      - name: "[Enclose.IO] Install dependencies"
+        run: |
+          brew upgrade
+          brew install squashfs
+      - name: "[Enclose.IO] Download binaries"
+        run: |
+          curl -OL https://github.com/pmq20/ruby-packer/releases/download/darwin-x64/rubyc
+          chmod +x rubyc
+          curl -OL https://github.com/enclose-io/ruby/releases/download/v2.7.1-darwin/ruby
+          chmod +x ruby
+      - name: "[Enclose.IO] Check dependencies"
+        run: |
+          sw_vers
+          uname -a
+          uname -p
+          uname -m
+          sysctl -n machdep.cpu.brand_string
+          which mksquashfs
+          mksquashfs -version
+      - name: "[Enclose.IO] TEST"
+        run: |
+          export PATH="$(pwd):$PATH"
+          cd src
+          which rubyc
+          which ruby
+          ./test-all

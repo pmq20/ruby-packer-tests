@@ -1,0 +1,46 @@
+name: Windows2016
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  make:
+    strategy:
+      matrix:
+        include:
+          - os: windows-2016
+            vs: 2017
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: ilammy/setup-nasm@v1
+      - uses: actions/checkout@v2
+        with:
+          path: src
+      - name: "[Enclose.IO] Install libraries"
+        run: |
+          choco install --no-progress squashfs wget
+      - name: "[Enclose.IO] Download binaries"
+        run: |
+          wget https://github.com/pmq20/ruby-packer/releases/download/windows-x64/rubyc.exe
+          wget https://github.com/enclose-io/ruby/releases/download/v2.7.1-windows/ruby.exe
+      - name: "[Enclose.IO] Inspect Windows Environment"
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\${{ matrix.vs }}\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          echo on
+          wmic OS get OSArchitecture
+          echo %PROCESSOR_ARCHITECTURE%
+          set
+          systeminfo
+          where nmake
+          where mksquashfs
+          mksquashfs -version
+        shell: cmd
+      - name: "[Enclose.IO] TEST"
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\${{ matrix.vs }}\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set PATH=%CD%;%PATH%
+          cd src
+          powershell .\test-all.ps1
+        shell: cmd
